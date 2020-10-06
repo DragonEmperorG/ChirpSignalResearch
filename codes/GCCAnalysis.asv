@@ -44,7 +44,7 @@ mAudioStream(mChirpInsertIndex:(mChirpInsertIndex + mChirpSampleLength - 1)) = m
 % figure('Name','Analyse audio stream');
 % plot(mAudioStreamTimeAxis, mAudioStream, '-x');
 
-% STFT
+figure('Name','Analyse audio stream magnitude spectrogram');
 stftHopLength = 128;
 stftFFTLength = 1024;
 stftOverlapLength = stftFFTLength - stftHopLength;
@@ -53,23 +53,6 @@ audioStreamMagnitudeSpectrum = abs(audioStreamSpectrum);
 audioStreamMagnitudeSpectrumPositive = flipud(audioStreamMagnitudeSpectrum(stftFFTLength/2:stftFFTLength,:));
 audioStreamSpectrumFrequencePositive = flipud(audioStreamSpectrumFrequence(stftFFTLength/2:stftFFTLength,:));
 
-% figure('Name','Analyse audio stream magnitude spectrogram');
-% timeCounts = length(audioStreamSpectrumTime);
-% frequencyCounts = length(audioStreamSpectrumFrequencePositive);
-% length4Scatter = timeCounts * frequencyCounts;
-% x4Scatter = zeros(length4Scatter, 1);
-% y4Scatter = zeros(length4Scatter, 1);
-% z4Scatter = zeros(length4Scatter, 1);
-% for i = 1 : timeCounts
-%     endIndex = i * frequencyCounts;
-%     beginIndex = endIndex - frequencyCounts + 1;
-%     x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
-%     y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencePositive;
-%     z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
-% end
-% scatter(x4Scatter, y4Scatter, 1, z4Scatter);
-
-figure('Name','Analyse audio stream magnitude spectrogram discrete');
 timeCounts = length(audioStreamSpectrumTime);
 frequencyCounts = length(audioStreamSpectrumFrequencePositive);
 length4Scatter = timeCounts * frequencyCounts;
@@ -79,12 +62,11 @@ z4Scatter = zeros(length4Scatter, 1);
 for i = 1 : timeCounts
     endIndex = i * frequencyCounts;
     beginIndex = endIndex - frequencyCounts + 1;
-    x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * i;
-    y4Scatter(beginIndex:endIndex) = (frequencyCounts:-1:1)';
+    x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
+    y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencePositive;
     z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
 end
-scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's');
-
+scatter(x4Scatter, y4Scatter, );
 
 
 % figure('Name','Standard Chirp Signal 17k to 21k Spectrogram');
