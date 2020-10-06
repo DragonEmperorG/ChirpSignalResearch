@@ -1,64 +1,72 @@
 % Sample Rate in Hz
 % Audio CD
 m44100SR = 44100;
+mSampleRate = m44100SR;
 % Chirp Signal Duration in ms
-mChirpLength = 45;
+mChirpLength = 0.045;
 % Time Resolution in s
 mTR=1/1000;
-mAudioCDTR = 1 /m44100SR;
+mTimeResolution = 1 /mSampleRate;
 % Chirp Signal Time Axis in s
-mAudioCDTA = (0 : 1 / m44100SR : (mChirpLength / 1000))';
+mChirpSampleLength = floor(mChirpLength / mTimeResolution);
+mChirpTimeAxis = (0 : (mChirpSampleLength-1))' * mTimeResolution;
 % Instantaneous Frequency
-mFrequencyView0 = 15000;
-mFrequency16 = 16000;
-mFrequency17 = 17000;
-mFrequency18 = 18000;
-mFrequency21 = 21000;
-mFrequencyView1 = 22000;
+mFrequency15000 = 15000;
+mFrequency16000 = 16000;
+mFrequency17000 = 17000;
+mFrequency18000 = 18000;
+mFrequency21000 = 21000;
+mFrequency22000 = 22000;
 % Window Size
-mCSSize=size(mAudioCDTA,1);
-mWSize=2^ceil(log2(mCSSize));
-% Frequence Index
-m17kFI=floor((mFrequency17-mFrequency16)*mCSSize/(mFrequency21-mFrequency16));
-m18kFI=floor((mFrequency18-mFrequency16)*mCSSize/(mFrequency21-mFrequency16));
+mWindowSampleLength = 2^ceil(log2(mChirpSampleLength));
 
 % Chirp Generation
-mAudioCDTRCS = chirp(mAudioCDTA, mFrequency16, mAudioCDTA(end), mFrequency21);
-mAudioCDTRCS17k21k = mAudioCDTRCS(m17kFI:end);
-mAudioCDTRCS17k21kTA=mAudioCDTA(m17kFI:end);
+mChirpStartFrequence = mFrequency15000;
+mChirpStopFrequence = mFrequency18000;
+mChirpSignalValue = chirp(mChirpTimeAxis, mChirpStartFrequence, mChirpTimeAxis(end), mChirpStopFrequence);
 
-% Chirp Signal Templete
-m44100CST=randn(mWSize,1)/100;
-m44100CST(1:length(mAudioCDTRCS),1)=mAudioCDTRCS;
+% Analyse chirp templete
+mChirpTempleteLength = mWindowSampleLength;
+mChirpTemplete = zeros(mChirpTempleteLength, 1);
+mChirpTemplete(1:(mChirpSampleLength)) = mChirpSignalValue;
 
-% Chirp Signal Detector Templete
-m44100CS17kDT=randn(mWSize,1)/100;
-m44100CS17kDT(1:length(mAudioCDTRCS17k21k),1)=mAudioCDTRCS17k21k;
+% mChirpTempleteTimeAxis = (0 : (mChirpTempleteLength-1))' * mTimeResolution;
+% figure('Name','Analyse chirp template');
+% plot(mChirpTempleteTimeAxis, mChirpTemplete, '-x');
 
-% Frequency Domain
-m44100CSTFD=fft(m44100CST);
-m44100CS17kDTFD=fft(m44100CS17kDT);
+% Analyse audio stream generation
+mAudioStreamLength = mWindowSampleLength * 3;
+mAudioStream = zeros(mAudioStreamLength, 1);
+mChirpInsertIndex = mWindowSampleLength + 1;
+mAudioStream(mChirpInsertIndex:(mChirpInsertIndex + mChirpSampleLength - 1)) = mChirpSignalValue;
 
-figure('Name','Standard Chirp Signal 16k to 21k Frequency Domain');
-pspectrum(mAudioCDTRCS,mAudioCDTA,'FrequencyLimits',[mFrequencyView0 mFrequencyView1]);
-figure('Name','Standard Chirp Signal 17k to 21k Frequency Domain');
-pspectrum(mAudioCDTRCS17k21k,mAudioCDTRCS17k21kTA,'FrequencyLimits',[mFrequencyView0 mFrequencyView1])
+% mAudioStreamTimeAxis = (0 : (mAudioStreamLength-1))' * mTimeResolution;
+% figure('Name','Analyse audio stream');
+% plot(mAudioStreamTimeAxis, mAudioStream, '-x');
 
-figure('Name','Standard Chirp Signal 16k to 21k Spectrogram');
-pspectrum(mAudioCDTRCS,mAudioCDTA,'spectrogram','FrequencyLimits',[mFrequencyView0 mFrequencyView1],'TimeResolution',mTR);
-figure('Name','Standard Chirp Signal 17k to 21k Spectrogram');
-pspectrum(mAudioCDTRCS17k21k,mAudioCDTRCS17k21kTA,'spectrogram','FrequencyLimits',[mFrequencyView0 mFrequencyView1],'TimeResolution',mTR)
+figure('Name','Analyse audio stream magnitude spectrogram');
+stftHopLength = 128;
+stftFFTLength = 1024;
+stftOverlapLength = stftFFTLength - stftHopLength;
+[audioStreamSpectrum, audioStreamSpectrumFrequence, audioStreamSpectrumTime] = stft(mAudioStream, mSampleRate, 'Window', hann(stftFFTLength), 'OverlapLength', 896, 'FFTLength', stftFFTLength);
+audioStreamMagnitudeSpectrum = abs(audioStreamSpectrum);
+audioStreamMagnitudeSpectrumPositive = flipud(audioStreamMagnitudeSpectrum(stftFFTLength/2:stftFFTLength,:));
+audioStreamSpectrumFrequencePositive = flipud(audioStreamSpectrumFrequence(stftFFTLength/2:stftFFTLength,:));
 
 
+% figure('Name','Standard Chirp Signal 17k to 21k Spectrogram');
+% pspectrum(mAudioCDTRCS17k21k,mAudioCDTRCS17k21kTA,'spectrogram','FrequencyLimits',[mFrequency15000 mFrequencyView1],'TimeResolution',mTR)
 % 
-mGCCFD=m44100CSTFD./m44100CS17kDTFD;
-
-% Time Domain
-mGCCTD=ifft(mGCCFD);
-
-
-
-mGCCTDModulus=abs(mGCCTD);
-
-% Time Delay
-[mCORRCOEF,mTimeDelay]=max(mGCCTDModulus);
+% 
+% % 
+% mGCCFD=m44100CSTFD./m44100CS17kDTFD;
+% 
+% % Time Domain
+% mGCCTD=ifft(mGCCFD);
+% 
+% 
+% 
+% mGCCTDModulus=abs(mGCCTD);
+% 
+% % Time Delay
+% [mCORRCOEF,mTimeDelay]=max(mGCCTDModulus);
