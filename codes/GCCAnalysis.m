@@ -23,6 +23,8 @@ mFrequency24000 = 24000;
 mWindowSampleLength = 2^ceil(log2(mChirpSampleLength));
 
 % Chirp Generation
+% mChirpStartFrequency = mFrequency15000;
+% mChirpStopFrequency = mFrequency18000;
 mChirpStartFrequency = mFrequency15000;
 mChirpStopFrequency = mFrequency18000;
 mChirpSignalValue = chirp(mChirpTimeAxis, mChirpStartFrequency, mChirpTimeAxis(end), mChirpStopFrequency);
@@ -134,40 +136,41 @@ hold on;
 axis equal;
 
 % GCC Analysis Window
-mGccFftLength = mWindowSampleLength;
-mAudioStreamGccWindowStartIndexArrayCounts = mAudioStreamCounts - mGccFftLength + 1;
-mAudioStreamGccWindowStartIndexArray = zeros(mAudioStreamGccWindowStartIndexArrayCounts, 1);
-mChirpStartIndex2GccWindowStartIndexArray =  zeros(mAudioStreamGccWindowStartIndexArrayCounts, 1);
-gccDetectorTimeDiscreteArray =  zeros(mAudioStreamGccWindowStartIndexArrayCounts, 1);
-for i = 1 : mAudioStreamGccWindowStartIndexArrayCounts
-    mAudioStreamGccWindowStartIndex = i;
-    mAudioStreamGccWindow = mAudioStream(mAudioStreamGccWindowStartIndex:(mAudioStreamGccWindowStartIndex + mGccFftLength - 1));
-    mAudioStreamGccWindowFft = fft(mAudioStreamGccWindow, mGccFftLength);
-
-    mChirpTempleteFft = fft(mChirpTemplete, mGccFftLength);
-
-    mGccIntermediate = mAudioStreamGccWindowFft .* conj(mChirpTempleteFft);
-    mGccIntermediateNormalize = mGccIntermediate ./ abs(mGccIntermediate);
-
-    mGccSimilarityTimeDomain = ifft(mGccIntermediateNormalize, mGccFftLength);
-    mGccSimilarityTimeDomainAbs = abs(mGccSimilarityTimeDomain);
-
-    [mMaxVal, mMaxIndex] = max(mGccSimilarityTimeDomainAbs);
-
-    gccDetectorTime = (mAudioStreamGccWindowStartIndex + (mMaxIndex - 1) - 1) * mTimeResolution;
-    gccDetectorTimeDiscrete = convertRealTime2STFTDiscreteTime(gccDetectorTime, audioStreamSpectrumTime);
-    gccDetectorTimeDiff = gccDetectorTime - chirpStartTime;
-
-%     hold on;
-%     plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-
-    mAudioStreamGccWindowStartIndexArray(i, 1) = mAudioStreamGccWindowStartIndex;
-    mChirpStartIndex2GccWindowStartIndexArray(i, 1) = mChirpInsertIndex - mAudioStreamGccWindowStartIndex;
-    gccDetectorTimeDiscreteArray(i, 1) = gccDetectorTimeDiscrete;
-end
-
-figure('Name', 'Analyse for GCC Window and Chirp Relative Relation');
-plot(mChirpStartIndex2GccWindowStartIndexArray, gccDetectorTimeDiscreteArray);
+% mGccFftLength = mWindowSampleLength;
+% mAudioStreamGccWindowStartIndexArrayCounts = mAudioStreamCounts - mGccFftLength + 1;
+% mAudioStreamGccWindowStartIndexArray = zeros(mAudioStreamGccWindowStartIndexArrayCounts, 1);
+% mChirpStartIndex2GccWindowStartIndexArray =  zeros(mAudioStreamGccWindowStartIndexArrayCounts, 1);
+% gccDetectorTimeDiscreteArray =  zeros(mAudioStreamGccWindowStartIndexArrayCounts, 1);
+% for i = 1 : mAudioStreamGccWindowStartIndexArrayCounts
+%     mAudioStreamGccWindowStartIndex = i;
+%     mAudioStreamGccWindow = mAudioStream(mAudioStreamGccWindowStartIndex:(mAudioStreamGccWindowStartIndex + mGccFftLength - 1));
+%     mAudioStreamGccWindowFft = fft(mAudioStreamGccWindow, mGccFftLength);
+% 
+%     mChirpTempleteFft = fft(mChirpTemplete, mGccFftLength);
+% 
+% %     mGccIntermediate = mAudioStreamGccWindowFft .* conj(mChirpTempleteFft);
+%     mGccIntermediate = mChirpTempleteFft .* conj(mAudioStreamGccWindowFft);
+%     mGccIntermediateNormalize = mGccIntermediate ./ abs(mGccIntermediate);
+% 
+%     mGccSimilarityTimeDomain = ifft(mGccIntermediateNormalize, mGccFftLength);
+%     mGccSimilarityTimeDomainAbs = abs(mGccSimilarityTimeDomain);
+% 
+%     [mMaxVal, mMaxIndex] = max(mGccSimilarityTimeDomainAbs);
+% 
+%     gccDetectorTime = (mAudioStreamGccWindowStartIndex + (mMaxIndex - 1) - 1) * mTimeResolution;
+%     gccDetectorTimeDiscrete = convertRealTime2STFTDiscreteTime(gccDetectorTime, audioStreamSpectrumTime);
+%     gccDetectorTimeDiff = gccDetectorTime - chirpStartTime;
+% 
+% %     hold on;
+% %     plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
+% 
+%     mAudioStreamGccWindowStartIndexArray(i, 1) = mAudioStreamGccWindowStartIndex;
+%     mChirpStartIndex2GccWindowStartIndexArray(i, 1) = mChirpInsertIndex - mAudioStreamGccWindowStartIndex;
+%     gccDetectorTimeDiscreteArray(i, 1) = gccDetectorTimeDiscrete;
+% end
+% 
+% figure('Name', 'Analyse for GCC Window and Chirp Relative Relation');
+% plot(mChirpStartIndex2GccWindowStartIndexArray, gccDetectorTimeDiscreteArray);
 
 % mAudioStreamGccWindowStartIndex = 1025;
 % mAudioStreamGccWindow = mAudioStream(mAudioStreamGccWindowStartIndex:(mAudioStreamGccWindowStartIndex + mGccFftLength - 1));
@@ -189,6 +192,5 @@ plot(mChirpStartIndex2GccWindowStartIndexArray, gccDetectorTimeDiscreteArray);
 % 
 % hold on;
 % plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-
 
 
