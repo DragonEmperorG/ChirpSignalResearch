@@ -1,7 +1,8 @@
 % Sample Rate in Hz
 % Audio CD
 m44100SR = 44100;
-mSampleRate = m44100SR;
+m48000SR = 48000;
+mSampleRate = m48000SR;
 % Chirp Signal Duration in ms
 mChirpLength = 0.045;
 % Time Resolution in s
@@ -28,7 +29,7 @@ mChirpStopFrequency = mFrequency18000;
 mChirpSignalValue = chirp(mChirpTimeAxis, mChirpStartFrequency, mChirpTimeAxis(end), mChirpStopFrequency);
 
 % Analyse chirp templete
-mChirpTempleteLength = mWindowSampleLength;
+mChirpTempleteLength = mWindowSampleLength;    % 2048
 mChirpTemplete = zeros(mChirpTempleteLength, 1);
 mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 
@@ -37,23 +38,27 @@ mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 % plot(mChirpTempleteTimeAxis, mChirpTemplete, '-x');
 
 % Analyse audio stream generation
-mAudioStreamLength = mWindowSampleLength * 3;
+mAudioStreamLength = mSampleRate;
 mAudioStreamCounts = mAudioStreamLength + 1;
 mAudioStream = zeros(mAudioStreamCounts, 1);
-mChirpInsertIndex = mWindowSampleLength + 1;
-% The mChirpInsertIndex start at 2049 ((2049 - 1) * mTimeResolution = 0.046439909297052)
+mChirpInsertIndex = mSampleRate * 0.5 + 1;
+% The mChirpInsertIndex start at 0.5s (mSampleRate * 0.5 * mTimeResolution = 0.5)
 mAudioStream(mChirpInsertIndex:(mChirpInsertIndex + mChirpSampleCounts - 1)) = mChirpSignalValue;
 
-% mAudioStreamTimeAxis = (0 : (mAudioStreamLength-1))' * mTimeResolution;
-% figure('Name','Analyse audio stream');
-% plot(mAudioStreamTimeAxis, mAudioStream, '-x');
+sAudioStreamSwitcher = false;
+if (sAudioStreamSwitcher)
+    mAudioStreamTimeAxis = (0 : mAudioStreamLength)' * mTimeResolution;
+    figure('Name','Analyse audio stream');
+    plot(mAudioStreamTimeAxis, mAudioStream, '-x');
+end
+
 
 % STFT
 stftHopLength = 128;
 stftFFTLength = 1024;
 stftOverlapLength = stftFFTLength - stftHopLength;
 mFrequencyResolution = mSampleRate / stftFFTLength;
-[audioStreamSpectrum, audioStreamSpectrumFrequence, audioStreamSpectrumTime] = stft(mAudioStream, mSampleRate, 'Window', hanning(stftFFTLength), 'OverlapLength', 896, 'FFTLength', stftFFTLength);
+[audioStreamSpectrum, audioStreamSpectrumFrequence, audioStreamSpectrumTime] = stft(mAudioStream, mSampleRate, 'Window', hann(stftFFTLength), 'OverlapLength', 896, 'FFTLength', stftFFTLength);
 audioStreamMagnitudeSpectrum = abs(audioStreamSpectrum);
 audioStreamMagnitudeSpectrumPositive = flipud(audioStreamMagnitudeSpectrum(stftFFTLength/2:stftFFTLength,:));
 audioStreamSpectrumFrequencyPositive = flipud(audioStreamSpectrumFrequence(stftFFTLength/2:stftFFTLength,:));
