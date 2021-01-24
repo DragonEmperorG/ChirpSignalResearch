@@ -38,6 +38,8 @@ mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 % plot(mChirpTempleteTimeAxis, mChirpTemplete, '-x');
 
 % Analyse audio stream generation
+% In this analysis, I assume the the audio value is sampled at the end of
+% sampling interval.
 mAudioStreamLength = mSampleRate;
 mAudioStreamCounts = mAudioStreamLength + 1;
 mAudioStream = zeros(mAudioStreamCounts, 1);
@@ -45,8 +47,8 @@ mChirpInsertIndex = mSampleRate * 0.5 + 1;
 % The mChirpInsertIndex start at 0.5s (mSampleRate * 0.5 * mTimeResolution = 0.5)
 mAudioStream(mChirpInsertIndex:(mChirpInsertIndex + mChirpSampleCounts - 1)) = mChirpSignalValue;
 
-sAudioStreamSwitcher = false;
-if (sAudioStreamSwitcher)
+sAudioStreamFigureSwitcher = false;
+if (sAudioStreamFigureSwitcher)
     mAudioStreamTimeAxis = (0 : mAudioStreamLength)' * mTimeResolution;
     figure('Name','Analyse audio stream');
     plot(mAudioStreamTimeAxis, mAudioStream, '-x');
@@ -54,8 +56,8 @@ end
 
 
 % STFT
-stftHopLength = 128;
-stftFFTLength = 1024;
+stftHopLength = 128; % stftHopLength * mTimeResolution = 0.002666666666667 s
+stftFFTLength = 1024; % mSampleRate / stftFFTLength = 46.875000000000000 Hz
 stftOverlapLength = stftFFTLength - stftHopLength;
 mFrequencyResolution = mSampleRate / stftFFTLength;
 [audioStreamSpectrum, audioStreamSpectrumFrequence, audioStreamSpectrumTime] = stft(mAudioStream, mSampleRate, 'Window', hann(stftFFTLength), 'OverlapLength', 896, 'FFTLength', stftFFTLength);
@@ -63,41 +65,43 @@ audioStreamMagnitudeSpectrum = abs(audioStreamSpectrum);
 audioStreamMagnitudeSpectrumPositive = flipud(audioStreamMagnitudeSpectrum(stftFFTLength/2:stftFFTLength,:));
 audioStreamSpectrumFrequencyPositive = flipud(audioStreamSpectrumFrequence(stftFFTLength/2:stftFFTLength,:));
 
-figure('Name','Analyse audio stream magnitude spectrogram');
-timeCounts = length(audioStreamSpectrumTime);
-frequencyCounts = length(audioStreamSpectrumFrequencyPositive);
-length4Scatter = timeCounts * frequencyCounts;
-x4Scatter = zeros(length4Scatter, 1);
-y4Scatter = zeros(length4Scatter, 1);
-z4Scatter = zeros(length4Scatter, 1);
-for i = 1 : timeCounts
-    endIndex = i * frequencyCounts;
-    beginIndex = endIndex - frequencyCounts + 1;
-    x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
-    y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencyPositive;
-    z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
+sStftTimeFrequencyFigureSwitcher = true;
+if (sStftTimeFrequencyFigureSwitcher)
+    figure('Name','Analyse audio stream magnitude spectrogram');
+    timeCounts = length(audioStreamSpectrumTime);
+    frequencyCounts = length(audioStreamSpectrumFrequencyPositive);
+    length4Scatter = timeCounts * frequencyCounts;
+    x4Scatter = zeros(length4Scatter, 1);
+    y4Scatter = zeros(length4Scatter, 1);
+    z4Scatter = zeros(length4Scatter, 1);
+    for i = 1 : timeCounts
+        endIndex = i * frequencyCounts;
+        beginIndex = endIndex - frequencyCounts + 1;
+        x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
+        y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencyPositive;
+        z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
+    end
+    scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');
+    
+    timeLowerBound4Plot = 0;
+    timeUpperBound4Plot = mAudioStreamLength * mTimeResolution;
+    hold on;
+    plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStartFrequency, mChirpStartFrequency], '-r');
+    hold on;
+    plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStopFrequency, mChirpStopFrequency], '-r');
+    
+    chirpStartTime = (mChirpInsertIndex - 1) * mTimeResolution;
+    chirpStopTime = chirpStartTime + mChirpLength;
+    hold on;
+    plot([chirpStartTime, chirpStartTime], [0, mFrequency24000], '-r');
+    hold on;
+    plot([chirpStopTime, chirpStopTime], [0, mFrequency24000], '-r');
+    
+    hold on;
+    axis tight;
 end
-scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');
 
-% hold on;
-% plot([audioStreamSpectrumTime(13), audioStreamSpectrumTime(13)], [0, mFrequency24000], '-r');
 
-timeLowerBound4Plot = 0;
-timeUpperBound4Plot = mAudioStreamLength * mTimeResolution;
-hold on;
-plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStartFrequency, mChirpStartFrequency], '-r');
-hold on;
-plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStopFrequency, mChirpStopFrequency], '-r');
-
-chirpStartTime = (mChirpInsertIndex - 1) * mTimeResolution;
-chirpStopTime = chirpStartTime + mChirpLength;
-hold on;
-plot([chirpStartTime, chirpStartTime], [0, mFrequency24000], '-r');
-hold on;
-plot([chirpStopTime, chirpStopTime], [0, mFrequency24000], '-r');
-
-hold on;
-axis tight;
 
 figure('Name','Analyse audio stream magnitude spectrogram discrete');
 timeCounts = length(audioStreamSpectrumTime);
@@ -106,7 +110,7 @@ length4Scatter = timeCounts * frequencyCounts;
 x4Scatter = zeros(length4Scatter, 1);
 y4Scatter = zeros(length4Scatter, 1);
 z4Scatter = zeros(length4Scatter, 1);
-for i = 1 : timeCounts
+for i = 0 : (timeCounts - 1)
     endIndex = i * frequencyCounts;
     beginIndex = endIndex - frequencyCounts + 1;
     x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * i;
