@@ -48,8 +48,8 @@ mChirpInsertIndex = mSampleRate * 0.5 + 1;
 mAudioStream(mChirpInsertIndex:(mChirpInsertIndex + mChirpSampleCounts - 1)) = mChirpSignalValue;
 
 sAudioStreamFigureSwitcher = false;
-if (sAudioStreamFigureSwitcher)
-    mAudioStreamTimeAxis = (0 : mAudioStreamLength)' * mTimeResolution;
+mAudioStreamTimeAxis = (0 : mAudioStreamLength)' * mTimeResolution;
+if (sAudioStreamFigureSwitcher)    
     figure('Name','Analyse audio stream');
     plot(mAudioStreamTimeAxis, mAudioStream, '-x');
 end
@@ -59,50 +59,47 @@ end
 stftHopLength = 128; % stftHopLength * mTimeResolution = 0.002666666666667 s
 stftFFTLength = 1024; % mSampleRate / stftFFTLength = 46.875000000000000 Hz
 stftOverlapLength = stftFFTLength - stftHopLength;
-mFrequencyResolution = mSampleRate / stftFFTLength;
+mStftFrequencyResolution = mSampleRate / stftFFTLength;
+mStftTimeResolution = mTimeResolution * stftHopLength;
 [audioStreamSpectrum, audioStreamSpectrumFrequence, audioStreamSpectrumTime] = stft(mAudioStream, mSampleRate, 'Window', hann(stftFFTLength), 'OverlapLength', 896, 'FFTLength', stftFFTLength);
 audioStreamMagnitudeSpectrum = abs(audioStreamSpectrum);
 audioStreamMagnitudeSpectrumPositive = flipud(audioStreamMagnitudeSpectrum(stftFFTLength/2:stftFFTLength,:));
 audioStreamSpectrumFrequencyPositive = flipud(audioStreamSpectrumFrequence(stftFFTLength/2:stftFFTLength,:));
 
-sStftTimeFrequencyFigureSwitcher = true;
+
+% Figure STFT with continuous frequency and time using scatter.
+sStftTimeFrequencyFigureSwitcher = false;
+timeCounts = length(audioStreamSpectrumTime);
+frequencyCounts = length(audioStreamSpectrumFrequencyPositive);
+length4Scatter = timeCounts * frequencyCounts;
+x4Scatter = zeros(length4Scatter, 1);
+y4Scatter = zeros(length4Scatter, 1);
+z4Scatter = zeros(length4Scatter, 1);
+for i = 1 : timeCounts
+    endIndex = i * frequencyCounts;
+    beginIndex = endIndex - frequencyCounts + 1;
+    x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
+    y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencyPositive;
+    z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
+end
+timeLowerBound4Plot = 0;
+timeUpperBound4Plot = mAudioStreamLength * mTimeResolution;
+chirpStartTime = (mChirpInsertIndex - 1) * mTimeResolution;
+chirpStopTime = chirpStartTime + mChirpLength;
 if (sStftTimeFrequencyFigureSwitcher)
-    figure('Name','Analyse audio stream magnitude spectrogram');
-    timeCounts = length(audioStreamSpectrumTime);
-    frequencyCounts = length(audioStreamSpectrumFrequencyPositive);
-    length4Scatter = timeCounts * frequencyCounts;
-    x4Scatter = zeros(length4Scatter, 1);
-    y4Scatter = zeros(length4Scatter, 1);
-    z4Scatter = zeros(length4Scatter, 1);
-    for i = 1 : timeCounts
-        endIndex = i * frequencyCounts;
-        beginIndex = endIndex - frequencyCounts + 1;
-        x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
-        y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencyPositive;
-        z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
-    end
-    scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');
-    
-    timeLowerBound4Plot = 0;
-    timeUpperBound4Plot = mAudioStreamLength * mTimeResolution;
+    figure('Name','Analyse audio stream magnitude spectrogram');    
+    scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');   
     hold on;
     plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStartFrequency, mChirpStartFrequency], '-r');
-    hold on;
     plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStopFrequency, mChirpStopFrequency], '-r');
-    
-    chirpStartTime = (mChirpInsertIndex - 1) * mTimeResolution;
-    chirpStopTime = chirpStartTime + mChirpLength;
-    hold on;
     plot([chirpStartTime, chirpStartTime], [0, mFrequency24000], '-r');
-    hold on;
     plot([chirpStopTime, chirpStopTime], [0, mFrequency24000], '-r');
-    
-    hold on;
-    axis tight;
+    daspect([mStftTimeResolution mStftFrequencyResolution 1])
+    hold off;
 end
 
 
-
+% Figure STFT with discrete frequency and time using scatter.
 figure('Name','Analyse audio stream magnitude spectrogram discrete');
 timeCounts = length(audioStreamSpectrumTime);
 frequencyCounts = length(audioStreamSpectrumFrequencyPositive);
@@ -110,12 +107,12 @@ length4Scatter = timeCounts * frequencyCounts;
 x4Scatter = zeros(length4Scatter, 1);
 y4Scatter = zeros(length4Scatter, 1);
 z4Scatter = zeros(length4Scatter, 1);
-for i = 0 : (timeCounts - 1)
-    endIndex = i * frequencyCounts;
+for i = 0 : (timeCounts-1)
+    endIndex = (i + 1) * frequencyCounts;
     beginIndex = endIndex - frequencyCounts + 1;
     x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * i;
-    y4Scatter(beginIndex:endIndex) = (frequencyCounts:-1:1)';
-    z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
+    y4Scatter(beginIndex:endIndex) = (frequencyCounts-1:-1:0)';
+    z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i+1);
 end
 scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');
 
@@ -127,51 +124,68 @@ mChirpStartFrequencyDiscrete = mChirpStartFrequency / mFrequencyResolution + 1;
 mChirpStopFrequencyDiscrete = mChirpStopFrequency / mFrequencyResolution + 1;
 hold on;
 plot([timeLowerBoundDiscrete4Plot, timeUpperBoundDiscrete4Plot], [mChirpStartFrequencyDiscrete, mChirpStartFrequencyDiscrete], '-r');
-hold on;
 plot([timeLowerBoundDiscrete4Plot, timeUpperBoundDiscrete4Plot], [mChirpStopFrequencyDiscrete, mChirpStopFrequencyDiscrete], '-r');
 
 chirpStartTimeDiscrete = convertRealTime2STFTDiscreteTime(chirpStartTime, audioStreamSpectrumTime);
 chirpStopTimeDiscrete = convertRealTime2STFTDiscreteTime(chirpStopTime, audioStreamSpectrumTime);
 mFrequency24000Discrete = mFrequency24000 / mFrequencyResolution + 1;
-hold on;
 plot([chirpStartTimeDiscrete, chirpStartTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-hold on;
 plot([chirpStopTimeDiscrete, chirpStopTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-hold on;
 plot([chirpStartTimeDiscrete, chirpStopTimeDiscrete], [mChirpStartFrequencyDiscrete, mChirpStopFrequencyDiscrete], '-r');
 
-hold on;
 axis equal;
 
+axDiscrete = gca; % current axes
+axDiscrete.XColor = 'r';
+axDiscrete.YColor = 'r';
+
+axContinusePosition = axDiscrete.Position; % position of first axes
+axContinuous = axes('Position',axContinusePosition,...
+    'XAxisLocation','top',...
+    'YAxisLocation','right',...
+    'Color','none');
+
+% plot(mAudioStreamTimeAxis, mAudioStream,'Parent',axContinuous,'Color','k');
+axDiscreteXlimMin = -5;
+axDiscreteXlimMax = timeCounts;
+axContinuousXlimMin = convertSTFTDiscreteTime2RealTime(axDiscreteXlimMin, audioStreamSpectrumTime);
+axContinuousXlimMax = convertSTFTDiscreteTime2RealTime(timeCounts, audioStreamSpectrumTime);
+
+xlim(axDiscrete, [axDiscreteXlimMin, axDiscreteXlimMax]);
+xlim(axContinuous, [axContinuousXlimMin, axContinuousXlimMax]);
+
+hlinkXlim = linkprop([axDiscrete, axContinuous],'xlim');
+hlinkYlim = linkprop([axDiscrete, axContinuous],'ylim');
+
 % Chirp Traversaler
-mChirpMidFrequenceDiscrete = (mChirpStartFrequencyDiscrete + mChirpStopFrequencyDiscrete) * 0.5;
-hold on;
-plot([timeLowerBoundDiscrete4Plot, timeUpperBoundDiscrete4Plot], [mChirpMidFrequenceDiscrete, mChirpMidFrequenceDiscrete], '-r');
-
-mChirpStftTimeLength = chirpStopTimeDiscrete - chirpStartTimeDiscrete;
-mHalfChirpStftTimeLength = mChirpStftTimeLength * 0.5;
-mChirpStftFreqLength = mChirpStopFrequencyDiscrete - mChirpStartFrequencyDiscrete;
-mChirpStftSlope = mChirpStftFreqLength / mChirpStftTimeLength;
-
-for discreteTimeTraversaler = timeLowerBoundDiscrete4Plot:timeUpperBoundDiscrete4Plot
-    % Equation of the discreteTimeTraversaler
-    % y - mChirpMidFrequenceDiscrete = mChirpStftSlope * (x - discreteTimeTraversaler)
-    timeTraversalerStart = discreteTimeTraversaler - mHalfChirpStftTimeLength;
-    timeTraversalerStop = discreteTimeTraversaler + mHalfChirpStftTimeLength;
-    
-    timeTraversalerStartDiscrete = ceil(timeTraversalerStart);
-    timeTraversalerStopDiscrete = floor(timeTraversalerStop);
-    
-    timeTraversalerStartDiscrete4Window = max([1, timeTraversalerStartDiscrete]);
-    timeTraversalerStopDiscrete4Window = min([timeCounts, timeTraversalerStopDiscrete]);
-    
-    freqTraversalerStartDiscrete4Window = mChirpStftSlope * (timeTraversalerStartDiscrete4Window - discreteTimeTraversaler) + mChirpMidFrequenceDiscrete;
-    freqTraversalerStopDiscrete4Window = mChirpStftSlope * (timeTraversalerStopDiscrete4Window - discreteTimeTraversaler) + mChirpMidFrequenceDiscrete;
-    
-    hold on;
-    plot([timeTraversalerStartDiscrete4Window, timeTraversalerStopDiscrete4Window], [freqTraversalerStartDiscrete4Window, freqTraversalerStopDiscrete4Window], '-r');
-    
-end
+% mChirpMidFrequenceDiscrete = (mChirpStartFrequencyDiscrete + mChirpStopFrequencyDiscrete) * 0.5;
+% hold on;
+% plot([timeLowerBoundDiscrete4Plot, timeUpperBoundDiscrete4Plot], [mChirpMidFrequenceDiscrete, mChirpMidFrequenceDiscrete], '-r');
+%
+% mChirpStftTimeLength = chirpStopTimeDiscrete - chirpStartTimeDiscrete;
+% mHalfChirpStftTimeLength = mChirpStftTimeLength * 0.5;
+% mChirpStftFreqLength = mChirpStopFrequencyDiscrete - mChirpStartFrequencyDiscrete;
+% mChirpStftSlope = mChirpStftFreqLength / mChirpStftTimeLength;
+%
+% for discreteTimeTraversaler = timeLowerBoundDiscrete4Plot:timeUpperBoundDiscrete4Plot
+%     % Equation of the discreteTimeTraversaler
+%     % y - mChirpMidFrequenceDiscrete = mChirpStftSlope * (x - discreteTimeTraversaler)
+%     timeTraversalerStart = discreteTimeTraversaler - mHalfChirpStftTimeLength;
+%     timeTraversalerStop = discreteTimeTraversaler + mHalfChirpStftTimeLength;
+%
+%     timeTraversalerStartDiscrete = ceil(timeTraversalerStart);
+%     timeTraversalerStopDiscrete = floor(timeTraversalerStop);
+%
+%     timeTraversalerStartDiscrete4Window = max([1, timeTraversalerStartDiscrete]);
+%     timeTraversalerStopDiscrete4Window = min([timeCounts, timeTraversalerStopDiscrete]);
+%
+%     freqTraversalerStartDiscrete4Window = mChirpStftSlope * (timeTraversalerStartDiscrete4Window - discreteTimeTraversaler) + mChirpMidFrequenceDiscrete;
+%     freqTraversalerStopDiscrete4Window = mChirpStftSlope * (timeTraversalerStopDiscrete4Window - discreteTimeTraversaler) + mChirpMidFrequenceDiscrete;
+%
+%     hold on;
+%     plot([timeTraversalerStartDiscrete4Window, timeTraversalerStopDiscrete4Window], [freqTraversalerStartDiscrete4Window, freqTraversalerStopDiscrete4Window], '-r');
+%
+% end
 
 
 
