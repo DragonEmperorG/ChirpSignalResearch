@@ -1,4 +1,4 @@
-function realTime = convertSTFTDiscreteTime2RealTime(stftDiscreteTime, stftTimeAxis)
+function realTime = convertStftTimestamp2RealTimeindex(stftDiscreteTime, stftTimeAxis)
 % 
 % 输入参数： 
 %   stftDiscreteTime：STFT 离散时间轴（从0开始）

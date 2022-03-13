@@ -6,7 +6,7 @@ mSampleRate = m44100SR;
 mChirpLength = 0.045;
 % Time Resolution in s
 mTR=1/1000;
-mTimeResolution = 1 /mSampleRate;
+mTimeResolution = 1 / mSampleRate;
 % Chirp Signal Time Axis in s
 mChirpSampleLength = floor(mChirpLength / mTimeResolution);
 mChirpSampleCounts = mChirpSampleLength + 1;
@@ -42,95 +42,33 @@ mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 mAudioStreamLength = mWindowSampleLength * 3;
 mAudioStreamCounts = mAudioStreamLength + 1;
 mAudioStream = zeros(mAudioStreamCounts, 1);
-mChirpInsertIndex = mWindowSampleLength + 1;
-mAudioStream(mChirpInsertIndex:(mChirpInsertIndex + mChirpSampleCounts - 1)) = mChirpSignalValue;
+mChirpInsertStartTimeindex = mWindowSampleLength;
+mChirpInsertStopTimeindex = mChirpInsertStartTimeindex + mChirpSampleCounts - 1;
+mAudioStream(mChirpInsertStartTimeindex:mChirpInsertStopTimeindex) = mChirpSignalValue;
 
 % mAudioStreamTimeAxis = (0 : (mAudioStreamLength-1))' * mTimeResolution;
 % figure('Name','Analyse audio stream');
 % plot(mAudioStreamTimeAxis, mAudioStream, '-x');
 
-% STFT
-stftHopLength = 128;
-stftFFTLength = 1024;
-stftOverlapLength = stftFFTLength - stftHopLength;
-mFrequencyResolution = mSampleRate / stftFFTLength;
-[audioStreamSpectrum, audioStreamSpectrumFrequence, audioStreamSpectrumTime] = stft(mAudioStream, mSampleRate, 'Window', hann(stftFFTLength), 'OverlapLength', 896, 'FFTLength', stftFFTLength);
-audioStreamMagnitudeSpectrum = abs(audioStreamSpectrum);
-audioStreamMagnitudeSpectrumPositive = flipud(audioStreamMagnitudeSpectrum(stftFFTLength/2:stftFFTLength,:));
-audioStreamSpectrumFrequencePositive = flipud(audioStreamSpectrumFrequence(stftFFTLength/2:stftFFTLength,:));
+plotStftAnalyzerPara1 = cell(2,1);
+plotStftAnalyzerPara1{1, 1} = 2;
+plotStftAnalyzerPara1{2, 1} = sprintf("Stft analyzer %d", mChirpInsertStartTimeindex);
+plotStftAnalyzerPara2 = cell(2,4);
+plotStftAnalyzerPara2{1, 1} = mAudioStream;
+plotStftAnalyzerPara2{1, 2} = mSampleRate;
+plotStftAnalyzerPara2{2, 1} = mChirpInsertStartTimeindex;
+plotStftAnalyzerPara2{2, 2} = mChirpInsertStopTimeindex;
+plotStftAnalyzerPara2{2, 3} = mChirpStartFrequency;
+plotStftAnalyzerPara2{2, 4} = mChirpStopFrequency;
+plotStftAnalyzerPara3 = cell(2,4);
+plotStftAnalyzerPara3{1, 1} = 0;
+plotStftAnalyzerPara3{1, 2} = 0;
+plotStftAnalyzerPara3{1, 3} = 0;
+plotStftAnalyzerPara3{1, 4} = 0;
+plotStftAnalyzerPara3{2, 3} = 0;
+plotStftAnalyzer(plotStftAnalyzerPara1, plotStftAnalyzerPara2, plotStftAnalyzerPara3)
 
-figure('Name','Analyse audio stream magnitude spectrogram');
-timeCounts = length(audioStreamSpectrumTime);
-frequencyCounts = length(audioStreamSpectrumFrequencePositive);
-length4Scatter = timeCounts * frequencyCounts;
-x4Scatter = zeros(length4Scatter, 1);
-y4Scatter = zeros(length4Scatter, 1);
-z4Scatter = zeros(length4Scatter, 1);
-for i = 1 : timeCounts
-    endIndex = i * frequencyCounts;
-    beginIndex = endIndex - frequencyCounts + 1;
-    x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * audioStreamSpectrumTime(i);
-    y4Scatter(beginIndex:endIndex) = audioStreamSpectrumFrequencePositive;
-    z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
-end
-scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');
 
-hold on;
-plot([audioStreamSpectrumTime(13), audioStreamSpectrumTime(13)], [0, mFrequency24000], '-r');
-
-timeLowerBound4Plot = 0;
-timeUpperBound4Plot = mAudioStreamLength * mTimeResolution;
-hold on;
-plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStartFrequency, mChirpStartFrequency], '-r');
-hold on;
-plot([timeLowerBound4Plot, timeUpperBound4Plot], [mChirpStopFrequency, mChirpStopFrequency], '-r');
-
-chirpStartTime = (mChirpInsertIndex - 1) * mTimeResolution;
-chirpStopTime = chirpStartTime + mChirpLength;
-hold on;
-plot([chirpStartTime, chirpStartTime], [0, mFrequency24000], '-r');
-hold on;
-plot([chirpStopTime, chirpStopTime], [0, mFrequency24000], '-r');
-
-figure('Name','Analyse audio stream magnitude spectrogram discrete');
-timeCounts = length(audioStreamSpectrumTime);
-frequencyCounts = length(audioStreamSpectrumFrequencePositive);
-length4Scatter = timeCounts * frequencyCounts;
-x4Scatter = zeros(length4Scatter, 1);
-y4Scatter = zeros(length4Scatter, 1);
-z4Scatter = zeros(length4Scatter, 1);
-for i = 1 : timeCounts
-    endIndex = i * frequencyCounts;
-    beginIndex = endIndex - frequencyCounts + 1;
-    x4Scatter(beginIndex:endIndex) = ones(frequencyCounts, 1) * i;
-    y4Scatter(beginIndex:endIndex) = (frequencyCounts:-1:1)';
-    z4Scatter(beginIndex:endIndex) = audioStreamMagnitudeSpectrumPositive(1:frequencyCounts, i);
-end
-scatter(x4Scatter, y4Scatter, 32, z4Scatter, 's', 'filled');
-
-% timeLowerBound4Discrete4Plot = 0;
-% timeUpperBound4Discrete4Plot = frequencyCounts + 1;
-timeLowerBoundDiscrete4Plot = convertRealTime2STFTDiscreteTime(timeLowerBound4Plot, audioStreamSpectrumTime);
-timeUpperBoundDiscrete4Plot = convertRealTime2STFTDiscreteTime(timeUpperBound4Plot, audioStreamSpectrumTime);
-mChirpStartFrequenceDiscrete = mChirpStartFrequency / mFrequencyResolution + 1;
-mChirpStopFrequenceDiscrete = mChirpStopFrequency / mFrequencyResolution + 1;
-hold on;
-plot([timeLowerBoundDiscrete4Plot, timeUpperBoundDiscrete4Plot], [mChirpStartFrequenceDiscrete, mChirpStartFrequenceDiscrete], '-r');
-hold on;
-plot([timeLowerBoundDiscrete4Plot, timeUpperBoundDiscrete4Plot], [mChirpStopFrequenceDiscrete, mChirpStopFrequenceDiscrete], '-r');
-
-chirpStartTimeDiscrete = convertRealTime2STFTDiscreteTime(chirpStartTime, audioStreamSpectrumTime);
-chirpStopTimeDiscrete = convertRealTime2STFTDiscreteTime(chirpStopTime, audioStreamSpectrumTime);
-mFrequency24000Discrete = mFrequency24000 / mFrequencyResolution + 1;
-hold on;
-plot([chirpStartTimeDiscrete, chirpStartTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-hold on;
-plot([chirpStopTimeDiscrete, chirpStopTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-hold on;
-plot([chirpStartTimeDiscrete, chirpStopTimeDiscrete], [mChirpStartFrequenceDiscrete, mChirpStopFrequenceDiscrete], '-r');
-
-hold on;
-axis equal;
 
 % GCC Analysis Window
 mGccFftLength = mWindowSampleLength;
@@ -140,28 +78,33 @@ for i = 1 : mAudioStreamGccWindowStartIndexArrayCounts
     mAudioStreamGccWindowStartIndex = i;
     mAudioStreamGccWindow = mAudioStream(mAudioStreamGccWindowStartIndex:(mAudioStreamGccWindowStartIndex + mGccFftLength - 1));
     mAudioStreamGccWindowFft = fft(mAudioStreamGccWindow, mGccFftLength);
-
+    
     mChirpTempleteFft = fft(mChirpTemplete, mGccFftLength);
-
+    
     mGccIntermediate = mAudioStreamGccWindowFft .* conj(mChirpTempleteFft);
     mGccSimilarityTimeDomain = ifft(mGccIntermediate, mGccFftLength);
     
-%     mGccIntermediate = mChirpTempleteFft .* conj(mAudioStreamGccWindowFft);
-%     mGccIntermediateNormalize = mGccIntermediate ./ abs(mGccIntermediate);
-%     mGccSimilarityTimeDomain = ifft(mGccIntermediateNormalize, mGccFftLength);
+    %     mGccIntermediate = mChirpTempleteFft .* conj(mAudioStreamGccWindowFft);
+    %     mGccIntermediateNormalize = mGccIntermediate ./ abs(mGccIntermediate);
+    %     mGccSimilarityTimeDomain = ifft(mGccIntermediateNormalize, mGccFftLength);
     
     mGccSimilarityTimeDomainAbs = abs(mGccSimilarityTimeDomain);
-
+    
     [mMaxVal, mMaxIndex] = max(mGccSimilarityTimeDomainAbs);
-
+    
     gccDetectorGlobalTimeindex = mAudioStreamGccWindowStartIndex + (mMaxIndex - 1);
     gccDetectorGlobalTimestamp = convertTimeindex2Timestamp(gccDetectorGlobalTimeindex, mSampleRate);
     gccDetectorTimeDiscrete = convertRealTime2STFTDiscreteTime(gccDetectorGlobalTimestamp, audioStreamSpectrumTime);
-    gccDetectorTimeindexDiff = gccDetectorGlobalTimeindex - mChirpInsertIndex;
-
-%     hold on;
-%     plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
-
+    gccDetectorTimeindexDiff = gccDetectorGlobalTimeindex - mChirpInsertStartTimeindex;
+    
+    if mAudioStreamGccWindowStartIndex == 2049 || mAudioStreamGccWindowStartIndex == 2050
+        figure;
+        plot(mGccSimilarityTimeDomainAbs);
+    end
+    
+    %     hold on;
+    %     plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
+    
     mGccAnalysisValues(i, 1) = mAudioStreamGccWindowStartIndex;
     mGccAnalysisValues(i, 2) = gccDetectorGlobalTimeindex;
     mGccAnalysisValues(i, 3) = mMaxVal;
@@ -172,26 +115,6 @@ figure('Name', 'Analyse for GCC Window and Chirp Relative Relation');
 plot(mGccAnalysisValues(:, 1), mGccAnalysisValues(:, 4), 'Marker', 'o');
 hold on;
 plot(mGccAnalysisValues(:, 1), mGccAnalysisValues(:, 3), 'Marker', 'd');
-
-mAudioStreamGccWindowStartIndex = 1025;
-mAudioStreamGccWindow = mAudioStream(mAudioStreamGccWindowStartIndex:(mAudioStreamGccWindowStartIndex + mGccFftLength - 1));
-mAudioStreamGccWindowFft = fft(mAudioStreamGccWindow, mGccFftLength);
-
-mChirpTempleteFft = fft(mChirpTemplete, mGccFftLength);
-
-mGccIntermediate = mAudioStreamGccWindowFft .* conj(mChirpTempleteFft);
-mGccIntermediateNormalize = mGccIntermediate ./ abs(mGccIntermediate);
-
-mGccSimilarityTimeDomain = ifft(mGccIntermediateNormalize, mGccFftLength);
-mGccSimilarityTimeDomainAbs = abs(mGccSimilarityTimeDomain);
-
-[mMaxVal, mMaxIndex] = max(mGccSimilarityTimeDomainAbs);
-
-gccDetectorTime = (mAudioStreamGccWindowStartIndex + (mMaxIndex - 1) - 1) * mTimeResolution;
-gccDetectorTimeDiscrete = convertRealTime2STFTDiscreteTime(gccDetectorTime, audioStreamSpectrumTime);
-gccDetectorTimeDiff = gccDetectorTime - chirpStartTime;
-
-hold on;
-plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
+hold off;
 
 
