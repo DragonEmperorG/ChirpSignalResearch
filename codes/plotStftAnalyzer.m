@@ -1,4 +1,4 @@
-function [outputArg1,outputArg2] = plotStftAnalyzer(plotCell, stftAnalyzerCell, featureIndicatorCell)
+function [] = plotStftAnalyzer(plotCell, stftAnalyzerCell, featureIndicatorCell)
 %UNTITLED 此处显示有关此函数的摘要
 %   此处显示详细说明
 
@@ -65,9 +65,19 @@ pGlobalStftFrequencystampLowerBound4Plot = 0;
 pGlobalStftFrequencystampUpperBound4Plot = convertRealFrequency2StftFrequencystamp(pGlobalFrequencyUpperBound4Plot, pSampleRate, pStftFftLength);;
 pGlobalStftFrequencystampBound4Plot = [pGlobalStftFrequencystampLowerBound4Plot pGlobalStftFrequencystampUpperBound4Plot];
 
+timeFeatureIndicator = featureIndicatorCell{1, 1};
+timeFeatureIndicatorCounts = size(timeFeatureIndicator, 1);
+pTimeFeatureIndicator = zeros(timeFeatureIndicatorCounts, 4);
+for i = 1:timeFeatureIndicatorCounts
+    pTimeFeatureIndicator(i, 1) = timeFeatureIndicator(i, 1);
+    pTimeFeatureIndicator(i, 2) = convertTimeindex2Timestamp(pTimeFeatureIndicator(i, 1), pSampleRate);
+    pTimeFeatureIndicator(i, 3) = convertRealTimeindex2StftTimestamp(pTimeFeatureIndicator(i, 1), pStftHopLength);
+end
 
 pReferenceSignalFeatureColor = 'r';
 pReferenceSignalFeatureLineStyle = '--';
+pFeatureIndicatorColor = 'k';
+pFeatureIndicatorLineStyle = '-';
 switch pPlotFlag
     case 1
         figure('Name',pPlotFigureName);
@@ -82,10 +92,15 @@ switch pPlotFlag
         hold on;
         plot(pSignalStartTimestampMarker4Plot, pGlobalFrequencyBound4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);  
         plot(pSignalStopTimestampMarker4Plot, pGlobalFrequencyBound4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);
+        for i = 1:timeFeatureIndicatorCounts
+            pTimeFeatureIndicator4Plot = [pTimeFeatureIndicator(i, 2) pTimeFeatureIndicator(i, 2)];
+            plot(pTimeFeatureIndicator4Plot, pGlobalFrequencyBound4Plot, 'Color', pFeatureIndicatorColor, 'LineStyle', pFeatureIndicatorLineStyle);
+        end
         plot(pGlobalTimestampBound4Plot, pSignalStartFrequencyMarker4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);
         plot(pGlobalTimestampBound4Plot, pSignalStopFrequencyMarker4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);
         plot([pSignalStartTimestamp, pSignalStopTimestamp], [pSignalStartFrequency, pSignalStopFrequency], 'Color', pReferenceSignalFeatureColor);
         daspect([pStftTimeResolution pStftFrequencyResolution 1])
+        xlim([-0.1 0.5]);
         hold off;
     case 2
         for i = 1 : timeCounts
@@ -100,6 +115,10 @@ switch pPlotFlag
         hold on;
         plot(pSignalStartStftTimestampMarker4Plot, pGlobalStftFrequencystampBound4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);  
         plot(pSignalStopStftTimestampMarker4Plot, pGlobalStftFrequencystampBound4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);
+        for i = 1:timeFeatureIndicatorCounts
+            pTimeFeatureIndicator4Plot = [pTimeFeatureIndicator(i, 3) pTimeFeatureIndicator(i, 3)];
+            plot(pTimeFeatureIndicator4Plot, pGlobalFrequencyBound4Plot, 'Color', pFeatureIndicatorColor, 'LineStyle', pFeatureIndicatorLineStyle);
+        end
         plot(pGlobalStftTimestampBound4Plot, pSignalStartFrequencyStftstampMarker4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);
         plot(pGlobalStftTimestampBound4Plot, pSignalStopFrequencyStftstampMarker4Plot, 'Color', pReferenceSignalFeatureColor, 'LineStyle', pReferenceSignalFeatureLineStyle);
         plot([pSignalStartStftTimestamp, pSignalStopStftTimestamp], [pSignalStartFrequencyStftstamp, pSignalStopFrequencyStftstamp], 'Color', pReferenceSignalFeatureColor);

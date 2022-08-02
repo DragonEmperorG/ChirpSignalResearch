@@ -51,7 +51,7 @@ mAudioStream(mChirpInsertStartTimeindex:mChirpInsertStopTimeindex) = mChirpSigna
 % plot(mAudioStreamTimeAxis, mAudioStream, '-x');
 
 plotStftAnalyzerPara1 = cell(2,1);
-plotStftAnalyzerPara1{1, 1} = 2;
+plotStftAnalyzerPara1{1, 1} = 1;
 plotStftAnalyzerPara1{2, 1} = sprintf("Stft analyzer %d", mChirpInsertStartTimeindex);
 plotStftAnalyzerPara2 = cell(2,4);
 plotStftAnalyzerPara2{1, 1} = mAudioStream;
@@ -60,14 +60,16 @@ plotStftAnalyzerPara2{2, 1} = mChirpInsertStartTimeindex;
 plotStftAnalyzerPara2{2, 2} = mChirpInsertStopTimeindex;
 plotStftAnalyzerPara2{2, 3} = mChirpStartFrequency;
 plotStftAnalyzerPara2{2, 4} = mChirpStopFrequency;
-plotStftAnalyzerPara3 = cell(2,4);
-plotStftAnalyzerPara3{1, 1} = 0;
-plotStftAnalyzerPara3{1, 2} = 0;
-plotStftAnalyzerPara3{1, 3} = 0;
-plotStftAnalyzerPara3{1, 4} = 0;
-plotStftAnalyzerPara3{2, 3} = 0;
-plotStftAnalyzer(plotStftAnalyzerPara1, plotStftAnalyzerPara2, plotStftAnalyzerPara3)
+plotStftAnalyzerPara3 = cell(3,1);
+% plotStftAnalyzer(plotStftAnalyzerPara1, plotStftAnalyzerPara2, plotStftAnalyzerPara3)
 
+tChirpShiftFrequency = +300;
+tChirpStartFrequency = mChirpStartFrequency + tChirpShiftFrequency;
+tChirpStopFrequency = mChirpStopFrequency + tChirpShiftFrequency;
+mChirpSignalValue = chirp(mChirpTimeAxis, tChirpStartFrequency, mChirpTimeAxis(end), tChirpStopFrequency);
+mChirpTempleteLength = mWindowSampleLength;
+mChirpTemplete = zeros(mChirpTempleteLength, 1);
+mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 
 
 % GCC Analysis Window
@@ -93,17 +95,13 @@ for i = 1 : mAudioStreamGccWindowStartIndexArrayCounts
     [mMaxVal, mMaxIndex] = max(mGccSimilarityTimeDomainAbs);
     
     gccDetectorGlobalTimeindex = mAudioStreamGccWindowStartIndex + (mMaxIndex - 1);
-    gccDetectorGlobalTimestamp = convertTimeindex2Timestamp(gccDetectorGlobalTimeindex, mSampleRate);
-    gccDetectorTimeDiscrete = convertRealTime2STFTDiscreteTime(gccDetectorGlobalTimestamp, audioStreamSpectrumTime);
     gccDetectorTimeindexDiff = gccDetectorGlobalTimeindex - mChirpInsertStartTimeindex;
     
-    if mAudioStreamGccWindowStartIndex == 2049 || mAudioStreamGccWindowStartIndex == 2050
-        figure;
-        plot(mGccSimilarityTimeDomainAbs);
-    end
-    
-    %     hold on;
-    %     plot([gccDetectorTimeDiscrete, gccDetectorTimeDiscrete], [0, mFrequency24000Discrete], '-r');
+%     if mAudioStreamGccWindowStartIndex == 1983 || mAudioStreamGccWindowStartIndex == 1984
+%         plotStftAnalyzerPara1{2, 1} = sprintf("Stft analyzer %d", mAudioStreamGccWindowStartIndex);
+%         plotStftAnalyzerPara3{1, 1} = [gccDetectorGlobalTimeindex];
+%         plotStftAnalyzer(plotStftAnalyzerPara1, plotStftAnalyzerPara2, plotStftAnalyzerPara3);
+%     end
     
     mGccAnalysisValues(i, 1) = mAudioStreamGccWindowStartIndex;
     mGccAnalysisValues(i, 2) = gccDetectorGlobalTimeindex;
@@ -111,7 +109,8 @@ for i = 1 : mAudioStreamGccWindowStartIndexArrayCounts
     mGccAnalysisValues(i, 4) = gccDetectorTimeindexDiff;
 end
 
-figure('Name', 'Analyse for GCC Window and Chirp Relative Relation');
+figureName = sprintf('Analyse for GCC Window and Chirp %d Hz to %d Hz Relative Relation', tChirpStartFrequency, tChirpStopFrequency);
+figure('Name', figureName);
 plot(mGccAnalysisValues(:, 1), mGccAnalysisValues(:, 4), 'Marker', 'o');
 hold on;
 plot(mGccAnalysisValues(:, 1), mGccAnalysisValues(:, 3), 'Marker', 'd');
