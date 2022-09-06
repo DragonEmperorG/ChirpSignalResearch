@@ -1,4 +1,4 @@
-function [rAnchorSignal] = generateAnchorSignal(sampleRate, startFrequency, stopFrequency, signalDuration)
+function [rAnchorSignal] = generateTemplateSignal(sampleRate, startFrequency, stopFrequency, signalDuration)
 %UNTITLED5 此处显示有关此函数的摘要
 %   此处显示详细说明
 % Sample Rate in Hz
@@ -23,14 +23,29 @@ mChirpStartFrequency = startFrequency;
 mChirpStopFrequency = startFrequency + mFrequencyDividedByTimeRatio * mChirpTimeAxis(end);
 mChirpSignalValue = chirp(mChirpTimeAxis, mChirpStartFrequency, mChirpTimeAxis(end), mChirpStopFrequency);
 
-Q1 = (0:mTimeResolution:signalDuration)';
-Q2 = chirp(Q1, mChirpStartFrequency, mChirpLength, stopFrequency);
+% Window Size
+mWindowSampleLength = 2^ceil(log2(mChirpSampleLength));
 
-Q3 = Q1 - mChirpTimeAxis;
-Q4 = Q2 - mChirpSignalValue;
+% Analyse chirp templete
+mChirpTempleteLength = mWindowSampleLength;
+mChirpTemplete = zeros(mChirpTempleteLength, 1);
+mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 
-fprintf("Anchor s，ignal counts: %d\n", mChirpSampleCounts);
-rAnchorSignal = mChirpSignalValue;
+% if plotAudioStream == 1
+%     % Time Resolution in s
+%     mTimeResolution = 1 / mSampleRate;
+%     mHalfTimeResolution = mTimeResolution * 0.5;
+%     mAudioStreamSampleAxis = (0 : (mAudioStreamCounts-1))';
+%     mAudioStreamTimeAxis = mAudioStreamSampleAxis * mTimeResolution + mHalfTimeResolution;
+%     figure('Name','Analyse chirp template');
+%     subplot(2,1,1);
+%     plot(mAudioStreamSampleAxis, mAudioStream, '-x');    
+%     subplot(2,1,2);
+%     plot(mAudioStreamTimeAxis, mAudioStream, '-x');
+% end
+
+fprintf("Template Signal counts: %d\n", mChirpSampleCounts);
+rAnchorSignal = mChirpTemplete;
 
 end
 
