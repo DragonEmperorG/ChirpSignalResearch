@@ -24,12 +24,23 @@ mChirpStopFrequency = startFrequency + mFrequencyDividedByTimeRatio * mChirpTime
 mChirpSignalValue = chirp(mChirpTimeAxis, mChirpStartFrequency, mChirpTimeAxis(end), mChirpStopFrequency);
 
 % Window Size
-mWindowSampleLength = 2^ceil(log2(mChirpSampleLength));
+mWindowSampleCounts = 2^ceil(log2(mChirpSampleLength));
 
 % Analyse chirp templete
-mChirpTempleteLength = mWindowSampleLength;
-mChirpTemplete = zeros(mChirpTempleteLength, 1);
+mChirpTempleteCounts = mWindowSampleCounts;
+mChirpTemplete = zeros(mChirpTempleteCounts, 1);
 mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
+
+mChirpTempleteTimeAxis = (0 : (mChirpTempleteCounts-1))' * mTimeResolution;
+mChirpStartFrequency = startFrequency;
+mChirpStopFrequency = startFrequency + mFrequencyDividedByTimeRatio * mChirpTempleteTimeAxis(end);
+mChirpTemplete = chirp(mChirpTempleteTimeAxis, mChirpStartFrequency, mChirpTempleteTimeAxis(end), mChirpStopFrequency);
+
+% mChirpTempleteTimeAxis = (0 : (mChirpTempleteCounts-1))' * mTimeResolution;
+% mChirpStopFrequency = stopFrequency;
+% mChirpStartFrequency = stopFrequency - mFrequencyDividedByTimeRatio * mChirpTempleteTimeAxis(end);
+% mChirpTemplete = chirp(mChirpTempleteTimeAxis, mChirpStartFrequency, mChirpTempleteTimeAxis(end), mChirpStopFrequency);
+
 
 % if plotAudioStream == 1
 %     % Time Resolution in s
@@ -44,7 +55,7 @@ mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 %     plot(mAudioStreamTimeAxis, mAudioStream, '-x');
 % end
 
-fprintf("Template Signal counts: %d\n", mChirpSampleCounts);
+% fprintf("Template Signal counts: %d\n", mChirpSampleCounts);
 rAnchorSignal = mChirpTemplete;
 
 end

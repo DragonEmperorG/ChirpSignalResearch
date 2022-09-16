@@ -11,4 +11,3 @@ function timestamp = convertTimeindex2Timestamp(timeindex, sampleRate)
 % 
 
 timestamp = timeindex / sampleRate;
-
