@@ -6,17 +6,17 @@ mSampleRate = sampleRate;
 % Time Resolution in s
 mTimeResolution = 1 / mSampleRate;
 % Chirp Signal Duration in ms
-mChirpLength = signalDuration;
+mChirpDuration = signalDuration;
 % Chirp Signal Time Axis in s
 % 由于采样点个数根据采样间隔项下取整，所以信号的持续时间比设计的要短（误差小于一个采样间隔）
-mChirpSampleLength = floor(mChirpLength / mTimeResolution);
+mChirpSampleLength = floor(mChirpDuration / mTimeResolution);
 mChirpSampleCounts = mChirpSampleLength + 1;
 
 % 采用冒号运算符计算时间轴和采用采样时间间隔计算时间轴在数值计算结果上存在差异
 % mChirpTimeAxis = (0:mTimeResolution:mChirpLength)';
 mChirpTimeAxis = (0 : mChirpSampleLength)' * mTimeResolution;
 
-mFrequencyDividedByTimeRatio = (stopFrequency - startFrequency) * (mChirpLength ^ (-1));
+mFrequencyDividedByTimeRatio = (stopFrequency - startFrequency) * (mChirpDuration ^ (-1));
 
 % Chirp Generation
 mChirpStartFrequency = startFrequency;
@@ -31,10 +31,10 @@ mChirpTempleteCounts = mWindowSampleCounts;
 mChirpTemplete = zeros(mChirpTempleteCounts, 1);
 mChirpTemplete(1:(mChirpSampleCounts)) = mChirpSignalValue;
 
-mChirpTempleteTimeAxis = (0 : (mChirpTempleteCounts-1))' * mTimeResolution;
-mChirpStartFrequency = startFrequency;
-mChirpStopFrequency = startFrequency + mFrequencyDividedByTimeRatio * mChirpTempleteTimeAxis(end);
-mChirpTemplete = chirp(mChirpTempleteTimeAxis, mChirpStartFrequency, mChirpTempleteTimeAxis(end), mChirpStopFrequency);
+% mChirpTempleteTimeAxis = (0 : (mChirpTempleteCounts-1))' * mTimeResolution;
+% mChirpStartFrequency = startFrequency;
+% mChirpStopFrequency = startFrequency + mFrequencyDividedByTimeRatio * mChirpTempleteTimeAxis(end);
+% mChirpTemplete = chirp(mChirpTempleteTimeAxis, mChirpStartFrequency, mChirpTempleteTimeAxis(end), mChirpStopFrequency);
 
 % mChirpTempleteTimeAxis = (0 : (mChirpTempleteCounts-1))' * mTimeResolution;
 % mChirpStopFrequency = stopFrequency;

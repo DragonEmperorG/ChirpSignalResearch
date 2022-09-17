@@ -12,35 +12,29 @@ mFrequency18900 = 18900;
 mFrequency21200 = 21200;
 mFrequency23500 = 23500;
 
-
 kSampleRate = 44100;
 kSignalDuration = 0.045;
 kSignalInsertStartSampleIndex = 10000;
-mChirpStartFrequency = mFrequency18000;
-mChirpStopFrequency = mFrequency15000;
-
-% kSampleRate = 48000;
-% kSignalDuration = 0.042;
-% kSignalInsertStartSampleIndex = 10000 - 4096 + 1;
-% mChirpStartFrequency = mFrequency18900;
-% mChirpStopFrequency = mFrequency16600;
+mSignalShift = 0;
+mChirpStartFrequency = mFrequency18000 + mSignalShift;
+mChirpStopFrequency = mFrequency18000 + mSignalShift;
 
 mAnchorSignal = generateSimulationAnchorSignal(kSampleRate, mChirpStartFrequency, mChirpStopFrequency, kSignalDuration);
-% mAnchorSignal = readRealAnchorSignal();
 mAnchorSignalCouts = length(mAnchorSignal);
 kSignalInsertStopSampleIndex = kSignalInsertStartSampleIndex + mAnchorSignalCouts - 1;
 
-cFrequencyShift = 0;
-mTemplateChirpStartFrequency = mChirpStartFrequency + cFrequencyShift;
-mTemplateChirpStopFrequency = mChirpStopFrequency + cFrequencyShift;
-mTemplateSignal = generateTemplateSignal(kSampleRate, mTemplateChirpStartFrequency, mTemplateChirpStopFrequency, kSignalDuration);
+% cFrequencyShift = 0;
+% mTemplateChirpStartFrequency = mChirpStartFrequency + cFrequencyShift;
+% mTemplateChirpStopFrequency = mChirpStopFrequency + cFrequencyShift;
+% mTemplateSignal = generateTemplateSignal(kSampleRate, mTemplateChirpStartFrequency, mTemplateChirpStopFrequency, kSignalDuration);
 
 % Analyse audio stream generation
 cSampleCounts = 22050;
 mAudioStream = generateAudioStream(kSampleRate, cSampleCounts, kSignalInsertStartSampleIndex, mAnchorSignal, 0);
 t = zeros(401,11);
 for i = -200:200
-    
+   
+% for i = -2:2
 %     if i ~= 0
 %         continue;
 %     end
@@ -49,7 +43,8 @@ for i = -200:200
     mTemplateChirpStartFrequency = mChirpStartFrequency + cFrequencyShift;
     mTemplateChirpStopFrequency = mChirpStopFrequency + cFrequencyShift;
     mTemplateSignal = generateTemplateSignal(kSampleRate, mTemplateChirpStartFrequency, mTemplateChirpStopFrequency, kSignalDuration);
-    feature = analyzeAudioStream(mAudioStream, mTemplateSignal, kSignalInsertStartSampleIndex, mTemplateChirpStartFrequency, mTemplateChirpStopFrequency);
+%     mTemplateSignal = generateTemplateSignal(kSampleRate, 17000, 17000, kSignalDuration);
+    feature = analyzeAudioStream(0,mAudioStream, mTemplateSignal, kSignalInsertStartSampleIndex, mTemplateChirpStartFrequency, mTemplateChirpStopFrequency);
     t(i+201,1) = cFrequencyShift;
     t(i+201,2) = mTemplateChirpStartFrequency;
     t(i+201,3) = mTemplateChirpStopFrequency;
@@ -65,7 +60,7 @@ plotStftAnalyzerPara1{2, 1} = sprintf("Stft analyzer %d", kSignalInsertStartSamp
 plotStftAnalyzerPara2 = cell(2,4);
 plotStftAnalyzerPara2{1, 1} = mAudioStream;
 plotStftAnalyzerPara2{1, 2} = kSampleRate;
-plotStftAnalyzerPara2{2, 1} = 9814;
+plotStftAnalyzerPara2{2, 1} = 9690;
 plotStftAnalyzerPara2{2, 2} = plotStftAnalyzerPara2{2, 1} + 2017 - 1;
 plotStftAnalyzerPara2{2, 3} = mTemplateChirpStartFrequency;
 plotStftAnalyzerPara2{2, 4} = mTemplateChirpStopFrequency;
